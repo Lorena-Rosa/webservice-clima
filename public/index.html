@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Clima — Demo</title>
+<style>
+  body{font-family: Arial, sans-serif;background:#f4f7fb;color:#0c1a35;padding:20px}
+  .card{background:#fff;border-radius:8px;padding:16px;margin:10px 0;box-shadow:0 2px 8px rgba(0,0,0,0.08)}
+  h1{color:#3771c8}
+  .grid{display:flex;gap:12px;flex-wrap:wrap}
+  .city{flex:1 1 220px}
+  .small{color:#666;font-size:0.9rem}
+  button{background:#7a2ecb;color:white;border:none;padding:8px 12px;border-radius:6px;cursor:pointer}
+</style>
+</head>
+<body>
+  <h1>Clima — São Paulo / Damasco / Dhaka</h1>
+  <p class="small">Clique em atualizar para buscar dados atuais</p>
+  <div style="margin-bottom:12px">
+    <button id="refresh">Atualizar</button>
+  </div>
+  <div class="grid" id="grid"></div>
+
+<script>
+const cities = [
+  { key: 'sao-paulo', label: 'São Paulo' },
+  { key: 'damasco', label: 'Damasco' },
+  { key: 'dhaka', label: 'Dhaka' }
+];
+
+function makeCard(label){
+  const div = document.createElement('div');
+  div.className = 'card city';
+  div.innerHTML = `<h2>${label}</h2>
+    <div class="small">Temperatura: <span class="temp">—</span> °C</div>
+    <div class="small">Mín: <span class="min">—</span> °C</div>
+    <div class="small">Máx: <span class="max">—</span> °C</div>
+    <div class="small">Vento: <span class="wind">—</span> m/s</div>`;
+  return div;
+}
+
+const grid = document.getElementById('grid');
+const cardMap = {};
+cities.forEach(c=>{
+  const card = makeCard(c.label);
+  grid.appendChild(card);
+  cardMap[c.key] = card;
+});
+
+async function fetchCity(key){
+  try{
+    const res = await fetch(`/api/weather?city=${encodeURIComponent(key)}`);
+    if(!res.ok) throw new Error('Erro ao buscar');
+    const data = await res.json();
+    const card = cardMap[key];
+    card.querySelector('.temp').textContent = data.temp ?? '—';
+    card.querySelector('.min').textContent = data.temp_min ?? '—';
+    card.querySelector('.max').textContent = data.temp_max ?? '—';
+    card.querySelector('.wind').textContent = data.wind_speed ?? '—';
+  } catch(e){
+    console.error(e);
+  }
+}
+
+async function refreshAll(){
+  await Promise.all(cities.map(c=>fetchCity(c.key)));
+}
+
+document.getElementById('refresh').addEventListener('click', refreshAll);
+
+// primeiro carregamento
+refreshAll();
+</script>
+</body>
+</html>
